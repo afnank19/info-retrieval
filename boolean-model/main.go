@@ -1,6 +1,7 @@
 package main
 
 import (
+	"boolean-model/sliceutil"
 	"bufio"
 	"fmt"
 	"os"
@@ -26,6 +27,12 @@ func main() {
 	// This has to be tokenized as well
 
 	queryIndex(query, index)
+
+	var testSet1 = []string{"cat", "hat", "bat", "kit"}
+	var testSet2 = []string{"sat", "umaiza"}
+
+	res := sliceutil.Union(testSet2, testSet1)
+	fmt.Println(res)
 }
 
 func queryIndex(query string, index map[string]string) {
@@ -35,7 +42,16 @@ func queryIndex(query string, index map[string]string) {
 	// 3. Tokenize the document string, add to an array
 	// 4. Have an answer array, that adds or removes documents
 
-	fmt.Println(tokenizeByDelimiter(query, ' '))
+	// fmt.Println(tokenizeByDelimiter(query, ' '))
+
+	tokenizedQuery := tokenizeByDelimiter(query, ' ')
+
+	for _, token := range tokenizedQuery {
+		if token != "AND" {
+
+		}
+	}
+
 	docStr := index[query]
 
 	resultingDocs := tokenizeByDelimiter(docStr, ',')
