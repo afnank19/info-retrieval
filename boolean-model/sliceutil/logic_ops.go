@@ -47,3 +47,20 @@ func Union(a, b []string) []string {
 
 	return result
 }
+
+func Difference(a, b []string) []string {
+	var result []string
+	for i := 0; i < len(a); i++ {
+		var foundInB = false
+		for j := 0; j < len(b); j++ {
+			if a[i] == b[j] {
+				foundInB = true
+			}
+		}
+
+		if !foundInB {
+			result = append(result, a[i])
+		}
+	}
+	return result
+}

@@ -27,36 +27,112 @@ func main() {
 	// This has to be tokenized as well
 
 	queryIndex(query, index)
+	fmt.Println("<---------->")
+	queryIndexV2(query, index)
+	// var testSet1 = []string{"cat", "hat", "bat", "kit"}
+	// var testSet2 = []string{"sat", "bruh"}
 
-	var testSet1 = []string{"cat", "hat", "bat", "kit"}
-	var testSet2 = []string{"sat", "umaiza"}
-
-	res := sliceutil.Union(testSet2, testSet1)
-	fmt.Println(res)
+	// res := sliceutil.Union(testSet2, testSet1)
+	// fmt.Println(res)
 }
 
+// Parses without precendence
 func queryIndex(query string, index map[string]string) {
-	// TODOS:
-	// 1. Tokenize the query string (Not doing operators now)
-	// 2. Query the index, get the document string back
-	// 3. Tokenize the document string, add to an array
-	// 4. Have an answer array, that adds or removes documents
-
-	// fmt.Println(tokenizeByDelimiter(query, ' '))
-
 	tokenizedQuery := tokenizeByDelimiter(query, ' ')
 
+	var res []string
+	var b []string
+	var currentOp string
 	for _, token := range tokenizedQuery {
-		if token != "AND" {
+		fmt.Print("CurrToken: " + token + "\n")
+		if token != "AND" && token != "OR" {
+			docStr := index[token]
+			documents := tokenizeByDelimiter(docStr, ',')
+			if currentOp == "" {
+				res = documents
+			} else {
+				b = documents
+			}
+		} else { // maybe check if res is not empty
+			currentOp = token
+		}
 
+		if currentOp != "" && len(res) > 0 && len(b) > 0 {
+			if currentOp == "AND" {
+				fmt.Print(res)
+				fmt.Print(" INTERSECTION ")
+				fmt.Print(b)
+				fmt.Println()
+				res = sliceutil.Intersection(res, b)
+
+				currentOp = ""
+				b = []string{}
+			}
+
+			if currentOp == "OR" {
+				fmt.Print(res)
+				fmt.Print(" UNION ")
+				fmt.Print(b)
+				fmt.Println()
+				res = sliceutil.Union(res, b)
+
+				currentOp = ""
+				b = []string{}
+			}
 		}
 	}
 
-	docStr := index[query]
+	fmt.Println(res)
+}
 
-	resultingDocs := tokenizeByDelimiter(docStr, ',')
+// Based on precedence, although i need to test more cases
+func queryIndexV2(query string, index map[string]string) {
+	tokenizedQuery := tokenizeByDelimiter(query, ' ')
 
-	fmt.Println(resultingDocs)
+	var res []string
+	var b []string
+
+	var operators = []string{"AND", "OR"}
+	for i := 0; i < len(operators); i++ {
+		// Once for each AND, OR
+		for j := 0; j < len(tokenizedQuery); j++ {
+			if tokenizedQuery[j] == operators[i] {
+				if len(res) == 0 {
+					docStr := index[tokenizedQuery[j-1]]
+					documents := tokenizeByDelimiter(docStr, ',')
+					res = documents
+				}
+
+				docStr := index[tokenizedQuery[min(j+1, len(tokenizedQuery))]]
+				documents := tokenizeByDelimiter(docStr, ',')
+				b = documents
+			}
+
+			if len(res) > 0 && len(b) > 0 {
+				if operators[i] == "AND" {
+					fmt.Print(res)
+					fmt.Print(" INTERSECTION ")
+					fmt.Print(b)
+					fmt.Println()
+					res = sliceutil.Intersection(res, b)
+
+					b = []string{}
+				}
+
+				if operators[i] == "OR" {
+					fmt.Print(res)
+					fmt.Print(" UNION ")
+					fmt.Print(b)
+					fmt.Println()
+					res = sliceutil.Union(res, b)
+
+					b = []string{}
+				}
+			}
+		}
+	}
+
+	fmt.Println(res)
 }
 
 func createIndex(fileList []string, basePath string, index map[string]string) {
