@@ -24,19 +24,14 @@ func main() {
 	fmt.Print("Query: ")
 	reader := bufio.NewReader(os.Stdin)
 	query, _ := reader.ReadString('\n')
-	// This has to be tokenized as well
 
-	queryIndex(query, index)
+	// queryIndex(query, index)
 	fmt.Println("<---------->")
 	queryIndexV2(query, index)
-	// var testSet1 = []string{"cat", "hat", "bat", "kit"}
-	// var testSet2 = []string{"sat", "bruh"}
-
-	// res := sliceutil.Union(testSet2, testSet1)
-	// fmt.Println(res)
 }
 
 // Parses without precendence
+// Add NOT as well,
 func queryIndex(query string, index map[string]string) {
 	tokenizedQuery := tokenizeByDelimiter(query, ' ')
 
@@ -86,24 +81,38 @@ func queryIndex(query string, index map[string]string) {
 }
 
 // Based on precedence, although i need to test more cases
+// There are some issues, especially with the order
 func queryIndexV2(query string, index map[string]string) {
 	tokenizedQuery := tokenizeByDelimiter(query, ' ')
 
 	var res []string
 	var b []string
+	const EVAL_FLAG = "X" // Evaluated flag
 
 	var operators = []string{"AND", "OR"}
 	for i := 0; i < len(operators); i++ {
 		// Once for each AND, OR
 		for j := 0; j < len(tokenizedQuery); j++ {
 			if tokenizedQuery[j] == operators[i] {
+				leftToken := tokenizedQuery[j-1]
+				rightToken := tokenizedQuery[min(j+1, len(tokenizedQuery))]
+				var docStr string
+
 				if len(res) == 0 {
-					docStr := index[tokenizedQuery[j-1]]
+					docStr := index[leftToken]
+					tokenizedQuery[j-1] = EVAL_FLAG // Should change it to some other flag
 					documents := tokenizeByDelimiter(docStr, ',')
 					res = documents
 				}
 
-				docStr := index[tokenizedQuery[min(j+1, len(tokenizedQuery))]]
+				// Problem area
+				if tokenizedQuery[j-1] == EVAL_FLAG {
+					docStr = index[rightToken]
+					tokenizedQuery[min(j+1, len(tokenizedQuery))] = EVAL_FLAG
+				} else if tokenizedQuery[min(j+1, len(tokenizedQuery))] == EVAL_FLAG {
+					docStr = index[leftToken]
+					tokenizedQuery[min(j-1, len(tokenizedQuery))] = EVAL_FLAG
+				}
 				documents := tokenizeByDelimiter(docStr, ',')
 				b = documents
 			}
