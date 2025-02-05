@@ -1,11 +1,11 @@
 package main
 
 import (
+	"boolean-model/indexer"
 	"boolean-model/sliceutil"
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -13,7 +13,9 @@ func main() {
 	const TEST_DOC = "doc1.txt"
 	fileList := readFilesFromDir(DOC_PATH)
 	index := make(map[string]string)
-	createIndex(fileList, DOC_PATH, index)
+	// createIndex(fileList, DOC_PATH, index)
+
+	indexer.CreateIndex(fileList, DOC_PATH, index)
 	fmt.Println(index)
 
 	// tokens := tokenizer(readFile(TEST_DOC, DOC_PATH))
@@ -192,27 +194,27 @@ func executeOperations(operators, res, b, fileList []string, i int) ([]string, [
 	return res, b
 }
 
-func createIndex(fileList []string, basePath string, index map[string]string) {
-	for _, filename := range fileList {
-		fileStr := readFile(filename, basePath)
-		fileStr = strings.ToLower(fileStr)
+// func createIndex(fileList []string, basePath string, index map[string]string) {
+// 	for _, filename := range fileList {
+// 		fileStr := readFile(filename, basePath)
+// 		fileStr = strings.ToLower(fileStr)
 
-		tokens := tokenizer(fileStr)
+// 		tokens := tokenizer(fileStr)
 
-		addTokensToIndex(tokens, filename, index)
-	}
-}
+// 		addTokensToIndex(tokens, filename, index)
+// 	}
+// }
 
-func addTokensToIndex(tokens []string, filename string, index map[string]string) {
-	for _, token := range tokens {
-		// If token already exist, don't do anything, go to next token
-		currFilenames := index[token]
-		if strings.Contains(currFilenames, filename) {
-			continue
-		}
-		index[token] = currFilenames + filename + ","
-	}
-}
+// func addTokensToIndex(tokens []string, filename string, index map[string]string) {
+// 	for _, token := range tokens {
+// 		// If token already exist, don't do anything, go to next token
+// 		currFilenames := index[token]
+// 		if strings.Contains(currFilenames, filename) {
+// 			continue
+// 		}
+// 		index[token] = currFilenames + filename + ","
+// 	}
+// }
 
 func readFilesFromDir(path string) []string {
 	dirEntries, err := os.ReadDir(path)
@@ -230,24 +232,24 @@ func readFilesFromDir(path string) []string {
 	return fileList
 }
 
-func tokenizer(str string) []string {
-	var tokens []string
-	var currChars []byte
+// func tokenizer(str string) []string {
+// 	var tokens []string
+// 	var currChars []byte
 
-	for i := 0; i < len(str); i++ {
-		// 32 is ASCII for " " & 10 is for \n
-		if str[i] == ' ' || str[i] == '\n' {
-			if len(currChars) > 0 {
-				tokens = append(tokens, string(currChars))
-				currChars = []byte{}
-			}
-			continue
-		}
-		currChars = append(currChars, str[i])
-	}
+// 	for i := 0; i < len(str); i++ {
+// 		// 32 is ASCII for " " & 10 is for \n
+// 		if str[i] == ' ' || str[i] == '\n' {
+// 			if len(currChars) > 0 {
+// 				tokens = append(tokens, string(currChars))
+// 				currChars = []byte{}
+// 			}
+// 			continue
+// 		}
+// 		currChars = append(currChars, str[i])
+// 	}
 
-	return tokens
-}
+// 	return tokens
+// }
 
 // Pass the delimiter as a byte
 func tokenizeByDelimiter(str string, delimiter byte) []string {
@@ -269,14 +271,14 @@ func tokenizeByDelimiter(str string, delimiter byte) []string {
 	return tokens
 }
 
-func readFile(filename, path string) string {
-	data, err := os.ReadFile(path + filename)
-	if err != nil {
-		panic(err)
-	}
+// func readFile(filename, path string) string {
+// 	data, err := os.ReadFile(path + filename)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	fileData := string(data)
-	fileData = fileData + "\n" // Adding our own terminator to know if the string has ended
+// 	fileData := string(data)
+// 	fileData = fileData + "\n" // Adding our own terminator to know if the string has ended
 
-	return fileData
-}
+// 	return fileData
+// }
