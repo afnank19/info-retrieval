@@ -64,3 +64,25 @@ func Difference(a, b []string) []string {
 	}
 	return result
 }
+
+// Basically U - N, where U is the universal set
+// This could probably turned into an O(N) function by using a map of some sorts
+// My stupid self didn't recognise that the above func is exactly the same lol
+// anywho
+func UniversalDifference(universal, b []string) []string {
+	var result []string
+
+	for i := 0; i < len(universal); i++ {
+		var found = false
+		for j := 0; j < len(b); j++ {
+			if universal[i] == b[j] {
+				found = true
+			}
+		}
+		if !found {
+			result = append(result, universal[i])
+		}
+	}
+
+	return result
+}
