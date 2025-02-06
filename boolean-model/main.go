@@ -119,8 +119,10 @@ func queryIndexV2(query string, index map[string]string, fileList []string) {
 					continue // Probably needs to execute operations before this
 				}
 
+				// This maybe only be able to handle AND NOT
 				if j != 0 && tokenizedQuery[j] == "NOT" {
 					fmt.Println("UNIMPLEMENTED: Handle NOT found in the middle")
+					fmt.Println(tokenizedQuery[j-2], tokenizedQuery[j-1], " NOT ", tokenizedQuery[j+1])
 					continue
 				}
 
@@ -194,28 +196,6 @@ func executeOperations(operators, res, b, fileList []string, i int) ([]string, [
 	return res, b
 }
 
-// func createIndex(fileList []string, basePath string, index map[string]string) {
-// 	for _, filename := range fileList {
-// 		fileStr := readFile(filename, basePath)
-// 		fileStr = strings.ToLower(fileStr)
-
-// 		tokens := tokenizer(fileStr)
-
-// 		addTokensToIndex(tokens, filename, index)
-// 	}
-// }
-
-// func addTokensToIndex(tokens []string, filename string, index map[string]string) {
-// 	for _, token := range tokens {
-// 		// If token already exist, don't do anything, go to next token
-// 		currFilenames := index[token]
-// 		if strings.Contains(currFilenames, filename) {
-// 			continue
-// 		}
-// 		index[token] = currFilenames + filename + ","
-// 	}
-// }
-
 func readFilesFromDir(path string) []string {
 	dirEntries, err := os.ReadDir(path)
 	if err != nil {
@@ -231,25 +211,6 @@ func readFilesFromDir(path string) []string {
 
 	return fileList
 }
-
-// func tokenizer(str string) []string {
-// 	var tokens []string
-// 	var currChars []byte
-
-// 	for i := 0; i < len(str); i++ {
-// 		// 32 is ASCII for " " & 10 is for \n
-// 		if str[i] == ' ' || str[i] == '\n' {
-// 			if len(currChars) > 0 {
-// 				tokens = append(tokens, string(currChars))
-// 				currChars = []byte{}
-// 			}
-// 			continue
-// 		}
-// 		currChars = append(currChars, str[i])
-// 	}
-
-// 	return tokens
-// }
 
 // Pass the delimiter as a byte
 func tokenizeByDelimiter(str string, delimiter byte) []string {
@@ -270,15 +231,3 @@ func tokenizeByDelimiter(str string, delimiter byte) []string {
 
 	return tokens
 }
-
-// func readFile(filename, path string) string {
-// 	data, err := os.ReadFile(path + filename)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	fileData := string(data)
-// 	fileData = fileData + "\n" // Adding our own terminator to know if the string has ended
-
-// 	return fileData
-// }
