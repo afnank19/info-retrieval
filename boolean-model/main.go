@@ -2,6 +2,7 @@ package main
 
 import (
 	"boolean-model/indexer"
+	"boolean-model/interpreter"
 	"boolean-model/sliceutil"
 	"bufio"
 	"fmt"
@@ -29,7 +30,9 @@ func main() {
 
 	// queryIndex(query, index)
 	fmt.Println("<---------->")
-	queryIndexV2(query, index, fileList)
+	// queryIndexV2(query, index, fileList)
+
+	interpreter.ParseQuery(query, index, fileList)
 }
 
 // Parses without precendence
@@ -101,52 +104,99 @@ func queryIndexV2(query string, index map[string]string, fileList []string) {
 		fmt.Println("<-----END-SIMPLE-PARSE----->")
 		fmt.Println(res) // Will soon return this instead of a log
 	}
+
 	var operators = []string{"NOT", "AND", "OR"} // Sorted by precedence
 	for i := 0; i < len(operators); i++ {
 		// Once for each AND, OR
 		for j := 0; j < len(tokenizedQuery); j++ {
-			// fmt.Println("Curr Token " + tokenizedQuery[j])
 			if tokenizedQuery[j] == operators[i] {
+				fmt.Println("EVAL STATE: ", tokenizedQuery)
+
+				// This logic handles NOT at the beginning only
 				if j == 0 && tokenizedQuery[j] == "NOT" {
-					// fmt.Println("UNIMPLEMENTED: Handle the first NOT")
 					docStr := index[tokenizedQuery[j+1]]
 					tokenizedQuery[min(j+1, len(tokenizedQuery))] = EVAL_FLAG
 					documents := tokenizeByDelimiter(docStr, ',')
 
 					res = documents
 
-					res, b = executeOperations(operators, res, b, fileList, i)
+					res, b = executeOperations(operators, res, b, fileList, i, "NOT")
 					continue // Probably needs to execute operations before this
 				}
 
-				// This maybe only be able to handle AND NOT
-				if j != 0 && tokenizedQuery[j] == "NOT" {
-					fmt.Println("UNIMPLEMENTED: Handle NOT found in the middle")
-					fmt.Println(tokenizedQuery[j-2], tokenizedQuery[j-1], " NOT ", tokenizedQuery[j+1])
+				// This handles AND NOT
+				if j != 0 && tokenizedQuery[j] == "NOT" && tokenizedQuery[j-1] == "AND" {
+					res, b = parseAndNot(tokenizedQuery, res, b, j, index, EVAL_FLAG)
+					res, b = executeOperations(operators, res, b, fileList, i, "AND_NOT")
+
 					continue
 				}
 
-				leftToken := tokenizedQuery[j-1]
-				rightToken := tokenizedQuery[min(j+1, len(tokenizedQuery))]
-				var docStr string
+				// This handles OR NOT
+				
+				if tokenizedQuery[j] == "OR" && tokenizedQuery[j+1] == "NOT" {
+					res, b = parseOrNot(tokenizedQuery, res, b, j, index, EVAL_FLAG)
+					res, b = executeOperations(operators, res, b, fileList, i,"OR_NOT")
 
-				if len(res) == 0 {
-					docStr := index[leftToken]
-					tokenizedQuery[j-1] = EVAL_FLAG // Should change it to some other flag
+					continue
+				}
+
+				// I believe this can handle AND and OR
+				if tokenizedQuery[j] == "AND" {
+					leftToken := tokenizedQuery[j-1]
+					rightToken := tokenizedQuery[min(j+1, len(tokenizedQuery))]
+					var docStr string
+	
+					if len(res) == 0 {
+						docStr := index[leftToken]
+						tokenizedQuery[j-1] = EVAL_FLAG // Should change it to some other flag
+						documents := tokenizeByDelimiter(docStr, ',')
+						res = documents
+					}
+	
+					if tokenizedQuery[j-1] == EVAL_FLAG {
+						docStr = index[rightToken]
+						tokenizedQuery[min(j+1, len(tokenizedQuery))] = EVAL_FLAG
+					} else if tokenizedQuery[min(j+1, len(tokenizedQuery))] == EVAL_FLAG {
+						docStr = index[leftToken]
+						tokenizedQuery[min(j-1, len(tokenizedQuery))] = EVAL_FLAG
+					} else {
+						fmt.Println("Unhandled", tokenizedQuery[j])
+					}
 					documents := tokenizeByDelimiter(docStr, ',')
-					res = documents
+					b = documents
+					res, b = executeOperations(operators, res, b, fileList, i)
+
+					continue
 				}
 
-				if tokenizedQuery[j-1] == EVAL_FLAG {
-					docStr = index[rightToken]
-					tokenizedQuery[min(j+1, len(tokenizedQuery))] = EVAL_FLAG
-				} else if tokenizedQuery[min(j+1, len(tokenizedQuery))] == EVAL_FLAG {
-					docStr = index[leftToken]
-					tokenizedQuery[min(j-1, len(tokenizedQuery))] = EVAL_FLAG
+				if tokenizedQuery[j] == "OR" {
+					leftToken := tokenizedQuery[j-1]
+					rightToken := tokenizedQuery[min(j+1, len(tokenizedQuery))]
+					var docStr string
+	
+					if len(res) == 0 {
+						docStr := index[leftToken]
+						tokenizedQuery[j-1] = EVAL_FLAG // Should change it to some other flag
+						documents := tokenizeByDelimiter(docStr, ',')
+						res = documents
+					}
+	
+					if tokenizedQuery[j-1] == EVAL_FLAG {
+						docStr = index[rightToken]
+						tokenizedQuery[min(j+1, len(tokenizedQuery))] = EVAL_FLAG
+					} else if tokenizedQuery[min(j+1, len(tokenizedQuery))] == EVAL_FLAG {
+						docStr = index[leftToken]
+						tokenizedQuery[min(j-1, len(tokenizedQuery))] = EVAL_FLAG
+					} else {
+						fmt.Println("Unhandled")
+					}
+					documents := tokenizeByDelimiter(docStr, ',')
+					b = documents
+					res, b = executeOperations(operators, res, b, fileList, i, "OR")
+
+					continue
 				}
-				documents := tokenizeByDelimiter(docStr, ',')
-				b = documents
-				res, b = executeOperations(operators, res, b, fileList, i)
 			}
 		}
 	}
@@ -155,9 +205,68 @@ func queryIndexV2(query string, index map[string]string, fileList []string) {
 	fmt.Println(res)
 }
 
+func parseOrNot(tokenizedQuery []string, res, b []string, j int, index map[string]string, EVAL_FLAG string) ([]string, []string){
+	// fmt.Println(len(tokenizedQuery), j)
+	leftToken := tokenizedQuery[j-1]
+	rightToken := tokenizedQuery[min(j+2, len(tokenizedQuery))]
+	var docStr string
+
+	// fmt.Println(leftToken, rightToken)
+
+	if len(res) == 0 {
+		docStr := index[leftToken]
+		tokenizedQuery[j-1] = EVAL_FLAG // Should change it to some other flag
+		documents := tokenizeByDelimiter(docStr, ',')
+		res = documents
+	}
+
+	if tokenizedQuery[j-1] == EVAL_FLAG {
+		docStr = index[rightToken]
+		tokenizedQuery[min(j+2, len(tokenizedQuery))] = EVAL_FLAG
+	} else if tokenizedQuery[min(j+2, len(tokenizedQuery))] == EVAL_FLAG {
+		docStr = index[leftToken]
+		tokenizedQuery[min(j-1, len(tokenizedQuery))] = EVAL_FLAG
+	}
+	tokenizedQuery[j] = "OP_EXEC" // Mark the AND as executed so it doesn't get run when we pass through for AND
+	documents := tokenizeByDelimiter(docStr, ',')
+	b = documents
+
+	// fmt.Print("EVALUATION STATUS: ", tokenizedQuery, "\n")
+	return res, b
+}
+
+func parseAndNot(tokenizedQuery []string, res, b []string, j int, index map[string]string, EVAL_FLAG string) ([]string, []string){
+	leftToken := tokenizedQuery[j-2]
+	rightToken := tokenizedQuery[min(j+1, len(tokenizedQuery))]
+	var docStr string
+
+	// fmt.Println(leftToken, rightToken)
+
+	if len(res) == 0 {
+		docStr := index[leftToken]
+		tokenizedQuery[j-2] = EVAL_FLAG // Should change it to some other flag
+		documents := tokenizeByDelimiter(docStr, ',')
+		res = documents
+	}
+
+	if tokenizedQuery[j-2] == EVAL_FLAG {
+		docStr = index[rightToken]
+		tokenizedQuery[min(j+1, len(tokenizedQuery))] = EVAL_FLAG
+	} else if tokenizedQuery[min(j+1, len(tokenizedQuery))] == EVAL_FLAG {
+		docStr = index[leftToken]
+		tokenizedQuery[min(j-2, len(tokenizedQuery))] = EVAL_FLAG
+	}
+	tokenizedQuery[j-1] = "OP_EXEC" // Mark the AND as executed so it doesn't get run when we pass through for AND
+	documents := tokenizeByDelimiter(docStr, ',')
+	b = documents
+
+	// fmt.Print("EVALUATION STATUS: ", tokenizedQuery, "\n")
+	return res, b
+}
+
 // Slices are being passed by value
-func executeOperations(operators, res, b, fileList []string, i int) ([]string, []string) {
-	if len(res) > 0 && len(b) == 0 {
+func executeOperations(operators, res, b, fileList []string, i int, customOperation ...string) ([]string, []string) {
+	if len(res) > 0 && len(b) == 0 && len(customOperation) > 0 && customOperation[0] == "NOT" {
 		fmt.Println(res, " //  ", b, " //curr-op: ", operators[i])
 		if operators[i] == "NOT" {
 			fmt.Print("RUNNING -> ", fileList, " DIFFERENCE ", res, "\n")
@@ -169,8 +278,13 @@ func executeOperations(operators, res, b, fileList []string, i int) ([]string, [
 
 	// Not sure if this condition is required now that i changed the parsing structure a little bit
 	if len(res) > 0 && len(b) > 0 || true {
-		if operators[i] == "NOT" {
-			fmt.Println("Should run NOT")
+		if operators[i] == "NOT" && len(customOperation) > 0 && customOperation[0] == "AND_NOT" {
+			fmt.Print("RUNNING -> ", res, " DIFFERENCE ", b, "\n")
+			res = sliceutil.Difference(res, b)
+
+			b = []string{}
+
+			return res, b
 		}
 
 		if operators[i] == "AND" {
@@ -182,8 +296,19 @@ func executeOperations(operators, res, b, fileList []string, i int) ([]string, [
 			return res, b
 		}
 
-		if operators[i] == "OR" {
+		if operators[i] == "OR" && len(customOperation) > 0 && customOperation[0] == "OR" {
 			fmt.Print("RUNNING -> ", res, " UNION ", b, "\n")
+			res = sliceutil.Union(res, b)
+
+			b = []string{}
+
+			return res, b
+		}
+
+		if operators[i] == "OR" && len(customOperation) > 0 && customOperation[0] == "OR_NOT" {
+			fmt.Print("RUNNING -> ", res, " OR NOT ", b, "\n")
+		
+			b = sliceutil.Difference(fileList, b)
 			res = sliceutil.Union(res, b)
 
 			b = []string{}
