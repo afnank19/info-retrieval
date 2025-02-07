@@ -29,10 +29,11 @@ func main() {
 	query, _ := reader.ReadString('\n')
 
 	// queryIndex(query, index)
-	fmt.Println("<---------->")
+	fmt.Println("<----START---->")
 	// queryIndexV2(query, index, fileList)
 
-	interpreter.ParseQuery(query, index, fileList)
+	result := interpreter.ParseQuery(query, index, fileList)
+	fmt.Println("Query Result => ", result)
 }
 
 // Parses without precendence

@@ -5,21 +5,42 @@ import (
 	"fmt"
 )
 
-func ParseQuery(query string, index map[string]string, fileList []string) {
-	// First pass, convert all terms to their respective index values
-	// Also in the first pass, we will solve NOT aswell.
-	// Second pass, we solve all ANDs, rebuild the array again
-	// finally, solve all ORs, if any
-
+func ParseQuery(query string, index map[string]string, fileList []string) [][]string{
 	tokenizedQuery := tokenizeByDelimiter(query, ' ')
+	hasAnd, hasOr := setOperations(tokenizedQuery)
 
 	var result [][]string
 
 	result = handleNOT(tokenizedQuery, fileList, result, index)
 	fmt.Println("POST NOT PARSING -> ", result)
-	result = handleAND(fileList, result, index)
-	fmt.Println("POST AND PARSING -> ", result)
 
+	if hasAnd {
+		result = handleAND(result)
+		fmt.Println("POST AND PARSING -> ", result)
+	}
+
+	if hasOr {
+		result = handleOR(result)
+		fmt.Println("POST OR PARSING -> ", result)
+	}
+
+	fmt.Println("<-----END----->")
+	return result
+}
+
+func setOperations(tokenizedQuery []string) (bool, bool) {
+	var  hasAnd, hasOr bool = false, false
+
+	for i := 0; i < len(tokenizedQuery); i++ {
+		if tokenizedQuery[i] == "AND" {
+			hasAnd = true
+		}
+		if tokenizedQuery[i] == "OR" {
+			hasOr = true
+		}
+	}
+
+	return hasAnd, hasOr
 }
 
 func handleNOT(tokenizedQuery, fileList []string, result [][]string, index map[string]string) [][]string {
@@ -54,17 +75,29 @@ func handleNOT(tokenizedQuery, fileList []string, result [][]string, index map[s
 	return result
 }
 
-func handleAND(fileList []string, result [][]string, index map[string]string) [][]string{
+// I always find a case where my code doesn't work
+// but this has given reliable answers
+func handleAND(result [][]string) [][]string{
 	var newResult [][]string
 
 	for i := 0; i < len(result); i++ {
-		// i-1 could have a flag -> probably need something from newResult
-		// i-1 could not have a flag -> use the current documents
-		if result[i][0] == "AND" {
+		if result[i][0] == "AND" && result[i-1][0] == "X" {
+			fmt.Println("Solved an AND, found a new one", newResult, len(newResult))
+			documents := sliceutil.Intersection(newResult[len(newResult) - 1], result[i+1])
+			result[i+1] = []string{"X"}
+
+			newResult[len(newResult) - 1] = documents
+			i++
+		}
+
+		if result[i][0] == "AND" && result[i-1][0] != "X" {
 			fmt.Println(result[i-1], " AND ", result[i+1])
 			documents := sliceutil.Intersection(result[i-1], result[i+1])
+			result[i-1] = []string{"X"}
+			result[i+1] = []string{"X"}
 
 			newResult = append(newResult, documents)
+			i++
 		}
 
 		if result[i][0] == "OR" {
@@ -72,6 +105,42 @@ func handleAND(fileList []string, result [][]string, index map[string]string) []
 
 			operator = append(operator, result[i][0])
 			newResult = append(newResult, operator)
+		}
+		// fmt.Println("EVAL STATE: ", result)
+	}
+
+	// OR fix i guess :P
+	for j := 0; j < len(result); j++ {
+		// Not a fan of this condition
+		if result[j][0] != "X" && result[j - 1][0] == "OR" && result[j][0] != "AND" && result[j][0] != "NOT" {
+			newResult = append(newResult, result[j])
+		} 
+	}
+
+	return newResult
+}
+
+func handleOR(result [][]string) [][]string {
+	var newResult [][]string
+
+	for i := 0; i < len(result); i++ {
+		if result[i][0] == "OR" && result[i-1][0] == "X" {
+			fmt.Println("Solved an OR, found a new one", newResult, len(newResult))
+			documents := sliceutil.Union(newResult[len(newResult) - 1], result[i+1])
+			result[i+1] = []string{"X"}
+
+			newResult[len(newResult) - 1] = documents
+			i++
+		}
+
+		if result[i][0] == "OR" && result[i-1][0] != "X" {
+			fmt.Println(result[i-1], " OR ", result[i+1])
+			documents := sliceutil.Union(result[i-1], result[i+1])
+			result[i-1] = []string{"X"}
+			result[i+1] = []string{"X"}
+
+			newResult = append(newResult, documents)
+			i++
 		}
 	}
 
