@@ -9,6 +9,11 @@ func ParseQuery(query string, index map[string]string, fileList []string) [][]st
 	tokenizedQuery := tokenizeByDelimiter(query, ' ')
 	hasAnd, hasOr := setOperations(tokenizedQuery)
 
+	foundError := checkSyntax(tokenizedQuery)
+	if foundError {
+		return [][]string{}
+	}
+
 	var result [][]string
 
 	result = handleNOT(tokenizedQuery, fileList, result, index)
@@ -84,6 +89,12 @@ func handleAND(result [][]string) [][]string{
 		if result[i][0] == "AND" && result[i-1][0] == "X" {
 			fmt.Println("Solved an AND, found a new one", newResult, len(newResult))
 			documents := sliceutil.Intersection(newResult[len(newResult) - 1], result[i+1])
+			if len(documents) == 0 {
+				// This is if the result is empty, we put E in that place, \
+				// so when parsing OR, we don't run into index out of bounds errors
+				documents = append(documents, "E") 
+			}
+
 			result[i+1] = []string{"X"}
 
 			newResult[len(newResult) - 1] = documents
@@ -93,6 +104,10 @@ func handleAND(result [][]string) [][]string{
 		if result[i][0] == "AND" && result[i-1][0] != "X" {
 			fmt.Println(result[i-1], " AND ", result[i+1])
 			documents := sliceutil.Intersection(result[i-1], result[i+1])
+			if len(documents) == 0 {
+				documents = append(documents, "E")
+			}
+
 			result[i-1] = []string{"X"}
 			result[i+1] = []string{"X"}
 
@@ -106,14 +121,21 @@ func handleAND(result [][]string) [][]string{
 			operator = append(operator, result[i][0])
 			newResult = append(newResult, operator)
 		}
-		// fmt.Println("EVAL STATE: ", result)
+		fmt.Println("EVAL STATE: ", result)
 	}
 
+	fmt.Println("NEW RESULT STATE", newResult)
 	// OR fix i guess :P
 	for j := 0; j < len(result); j++ {
 		// Not a fan of this condition
+		if result[j][0] != "X" && result[min(j + 1, len(result) - 1)][0] == "OR" && result[j][0] != "AND" && result[j][0] != "NOT" {
+			newResult = append([][]string{result[j]}, newResult...)
+			continue
+		} 
+
 		if result[j][0] != "X" && result[j - 1][0] == "OR" && result[j][0] != "AND" && result[j][0] != "NOT" {
 			newResult = append(newResult, result[j])
+			continue
 		} 
 	}
 
@@ -126,6 +148,7 @@ func handleOR(result [][]string) [][]string {
 	for i := 0; i < len(result); i++ {
 		if result[i][0] == "OR" && result[i-1][0] == "X" {
 			fmt.Println("Solved an OR, found a new one", newResult, len(newResult))
+
 			documents := sliceutil.Union(newResult[len(newResult) - 1], result[i+1])
 			result[i+1] = []string{"X"}
 
@@ -135,7 +158,16 @@ func handleOR(result [][]string) [][]string {
 
 		if result[i][0] == "OR" && result[i-1][0] != "X" {
 			fmt.Println(result[i-1], " OR ", result[i+1])
-			documents := sliceutil.Union(result[i-1], result[i+1])
+
+			var documents []string
+			if result[i-1][0] == "E" && result[i+1][0] == "E" {
+				documents = sliceutil.Union([]string{}, []string{})
+			} else if result[i-1][0] == "E" {
+				documents = sliceutil.Union([]string{}, result[i+1])
+			} else {
+				documents = sliceutil.Union(result[i-1], result[i+1])
+			}
+
 			result[i-1] = []string{"X"}
 			result[i+1] = []string{"X"}
 
