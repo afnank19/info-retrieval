@@ -5,13 +5,13 @@ import (
 	"fmt"
 )
 
-func ParseQuery(query string, index map[string]string, fileList []string) [][]string{
+func ParseQuery(query string, index map[string]string, fileList []string) []string{
 	tokenizedQuery := tokenizeByDelimiter(query, ' ')
 	hasAnd, hasOr := setOperations(tokenizedQuery)
 
 	foundError := checkSyntax(tokenizedQuery)
 	if foundError {
-		return [][]string{}
+		return []string{}
 	}
 
 	var result [][]string
@@ -29,12 +29,15 @@ func ParseQuery(query string, index map[string]string, fileList []string) [][]st
 		fmt.Println("POST OR PARSING -> ", result)
 	}
 
+	fmt.Println("Pre cleaned result: ", result)
+	finalRes := cleanUpResult(result)
+
 	fmt.Println("<-----END----->")
-	return result
+	return finalRes
 }
 
 func setOperations(tokenizedQuery []string) (bool, bool) {
-	var  hasAnd, hasOr bool = false, false
+	var hasAnd, hasOr bool = false, false
 
 	for i := 0; i < len(tokenizedQuery); i++ {
 		if tokenizedQuery[i] == "AND" {
@@ -164,6 +167,8 @@ func handleOR(result [][]string) [][]string {
 				documents = sliceutil.Union([]string{}, []string{})
 			} else if result[i-1][0] == "E" {
 				documents = sliceutil.Union([]string{}, result[i+1])
+			}  else if result[i+1][0] == "E" {
+				documents = sliceutil.Union(result[i-1], []string{})
 			} else {
 				documents = sliceutil.Union(result[i-1], result[i+1])
 			}
@@ -196,4 +201,18 @@ func tokenizeByDelimiter(str string, delimiter byte) []string {
 	}
 
 	return tokens
+}
+
+func cleanUpResult(result [][]string) []string{
+	var newRes []string
+
+	temp := result[0]
+
+	if temp[0] == "E" {
+		temp = []string{}
+	}
+
+	newRes = temp
+
+	return newRes
 }

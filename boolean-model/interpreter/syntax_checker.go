@@ -1,6 +1,11 @@
 package interpreter
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/charmbracelet/lipgloss"
+)
 
 func checkSyntax(tokenizedQuery []string) bool{
 	length := len(tokenizedQuery)
@@ -77,7 +82,7 @@ func checkSyntax(tokenizedQuery []string) bool{
 		}
 
 		currTerm := tokenizedQuery[i]
-		if length > 1 && i != 0 && i != length-1 && currTerm != "AND" && currTerm != "OR" && currTerm != "NOT" {
+		if length > 1 && i != 0 && currTerm != "AND" && currTerm != "OR" && currTerm != "NOT" {
 			prevTerm := tokenizedQuery[max(i-1, 0)]
 			nextTerm := tokenizedQuery[min(i+1, length-1)]
 
@@ -88,7 +93,7 @@ func checkSyntax(tokenizedQuery []string) bool{
 				break
 			}
 
-			if nextTerm != "AND" && nextTerm != "OR" && nextTerm != "NOT" {
+			if nextTerm != "AND" && nextTerm != "OR" {
 				flags[min(i+1, length-1)] = "^"
 				foundError = true
 				errorMsg = "SYNTAX ERROR: Unexpected token " + nextTerm + " \nExpected [TERM] [OPERATOR]" 
@@ -97,9 +102,32 @@ func checkSyntax(tokenizedQuery []string) bool{
 		}
 	}
 
-	fmt.Println(errorMsg)
-	fmt.Println(tokenizedQuery)
-	fmt.Println(flags)
+	if foundError {
+		printErrorMessage(errorMsg, tokenizedQuery, flags)
+	}
 
 	return foundError
+}
+
+func printErrorMessage(errorMsg string, tokenizedQuery, flags []string) {
+	var errorStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FF2C2C"))
+	var bold = lipgloss.NewStyle().Bold(true)
+	var arrow = lipgloss.NewStyle().Foreground(lipgloss.Color("#ffb914"))
+	
+	fmt.Println(errorStyle.Render(errorMsg))
+
+	for i := 0; i < len(tokenizedQuery); i++ {
+		fmt.Print(bold.Render(tokenizedQuery[i]), " ")
+	}
+	fmt.Print("\n")
+	for i := 0; i < len(flags); i++ {
+		var spaces string = flags[i]
+
+		if flags[i] != "^" {
+			spaces = strings.Repeat(" ", len(flags[i]))
+		}
+
+		fmt.Print(arrow.Render(spaces), " ")
+	}
+	fmt.Print("\n")
 }
