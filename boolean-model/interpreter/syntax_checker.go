@@ -66,7 +66,7 @@ func checkSyntax(tokenizedQuery []string) bool{
 			prevTerm := tokenizedQuery[max(i-1, 0)]
 			nextTerm := tokenizedQuery[min(i+1, length-1)]
 
-			if  prevTerm == "NOT" {
+			if  prevTerm == "NOT" && i != 0 {
 				flags[max(i-1, 0)] = "^"
 				foundError = true
 				errorMsg = "SYNTAX ERROR: Unexpected token " + prevTerm + " \nExpected [OPERATOR] NOT [TERM]" 
@@ -81,8 +81,9 @@ func checkSyntax(tokenizedQuery []string) bool{
 			}
 		}
 
+		// Problem area, might need to look into it more
 		currTerm := tokenizedQuery[i]
-		if length > 1 && i != 0 && currTerm != "AND" && currTerm != "OR" && currTerm != "NOT" {
+		if length > 1 && i != 0 && i != length-1 && currTerm != "AND" && currTerm != "OR" && currTerm != "NOT" {
 			prevTerm := tokenizedQuery[max(i-1, 0)]
 			nextTerm := tokenizedQuery[min(i+1, length-1)]
 
@@ -111,7 +112,7 @@ func checkSyntax(tokenizedQuery []string) bool{
 
 func printErrorMessage(errorMsg string, tokenizedQuery, flags []string) {
 	var errorStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FF2C2C"))
-	var bold = lipgloss.NewStyle().Bold(true)
+	var bold = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#e1e1e1"))
 	var arrow = lipgloss.NewStyle().Foreground(lipgloss.Color("#ffb914"))
 	
 	fmt.Println(errorStyle.Render(errorMsg))

@@ -3,9 +3,15 @@ package interpreter
 import (
 	"boolean-model/sliceutil"
 	"fmt"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
+var green = lipgloss.NewStyle().Foreground(lipgloss.Color("#a3ff47"))
+
 func ParseQuery(query string, index map[string]string, fileList []string) []string{
+	fmt.Println(green.Render("<----START-PARSER---->"))
+
 	tokenizedQuery := tokenizeByDelimiter(query, ' ')
 	hasAnd, hasOr := setOperations(tokenizedQuery)
 
@@ -32,7 +38,7 @@ func ParseQuery(query string, index map[string]string, fileList []string) []stri
 	fmt.Println("Pre cleaned result: ", result)
 	finalRes := cleanUpResult(result)
 
-	fmt.Println("<-----END----->")
+	fmt.Println(green.Render("<-----END-PARSER----->"))
 	return finalRes
 }
 
@@ -67,6 +73,9 @@ func handleNOT(tokenizedQuery, fileList []string, result [][]string, index map[s
 			documents := tokenizeByDelimiter(docStr, ',')
 			// fmt.Println("Prev docs b4 NOT: ", documents)
 			documents = sliceutil.Difference(fileList, documents) // Difference from the universal set
+			if len(documents) == 0 {
+				documents = append(documents, "E")
+			}
 
 			result = append(result, documents)
 			j++ // we skip the next token, because we already used that token i.e NOT [TERM]
@@ -76,6 +85,9 @@ func handleNOT(tokenizedQuery, fileList []string, result [][]string, index map[s
 
 		docStr := index[tokenizedQuery[j]]
 		documents := tokenizeByDelimiter(docStr, ',')
+		if len(documents) == 0 {
+			documents = append(documents, "E")
+		}
 
 		result = append(result, documents)
 	}
@@ -124,10 +136,10 @@ func handleAND(result [][]string) [][]string{
 			operator = append(operator, result[i][0])
 			newResult = append(newResult, operator)
 		}
-		fmt.Println("EVAL STATE: ", result)
+		// fmt.Println("EVAL STATE: ", result)
 	}
 
-	fmt.Println("NEW RESULT STATE", newResult)
+	// fmt.Println("NEW RESULT STATE", newResult)
 	// OR fix i guess :P
 	for j := 0; j < len(result); j++ {
 		// Not a fan of this condition
@@ -152,7 +164,12 @@ func handleOR(result [][]string) [][]string {
 		if result[i][0] == "OR" && result[i-1][0] == "X" {
 			fmt.Println("Solved an OR, found a new one", newResult, len(newResult))
 
-			documents := sliceutil.Union(newResult[len(newResult) - 1], result[i+1])
+			var documents []string
+			if result[i+1][0] == "E" {
+				documents = sliceutil.Union(newResult[len(newResult) - 1], []string{})
+			} else {
+				documents = sliceutil.Union(newResult[len(newResult) - 1], result[i+1])
+			}
 			result[i+1] = []string{"X"}
 
 			newResult[len(newResult) - 1] = documents
@@ -205,6 +222,10 @@ func tokenizeByDelimiter(str string, delimiter byte) []string {
 
 func cleanUpResult(result [][]string) []string{
 	var newRes []string
+
+	if len(result[0]) == 0 {
+		return []string{}
+	}
 
 	temp := result[0]
 

@@ -7,33 +7,40 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
+	"github.com/charmbracelet/lipgloss"
 )
+
+var queryStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffffff"))
 
 func main() {
 	const DOC_PATH = "./docs/"
 	const TEST_DOC = "doc1.txt"
 	fileList := readFilesFromDir(DOC_PATH)
 	index := make(map[string]string)
-	// createIndex(fileList, DOC_PATH, index)
 
 	indexer.CreateIndex(fileList, DOC_PATH, index)
-	fmt.Println(index)
+	// fmt.Println(index)
 
-	// tokens := tokenizer(readFile(TEST_DOC, DOC_PATH))
-
-	// fmt.Println("TOKENS ->", tokens)
-	// fmt.Println(tokenizeByDelimiter("doct1.txt,doc2.txt,", ','))
-
-	fmt.Print("Query: ")
+	fmt.Print(queryStyle.Render("Query:"), " ")
 	reader := bufio.NewReader(os.Stdin)
 	query, _ := reader.ReadString('\n')
 
-	// queryIndex(query, index)
-	fmt.Println("<----START---->")
-	// queryIndexV2(query, index, fileList)
-
 	result := interpreter.ParseQuery(query, index, fileList)
-	fmt.Println("Query Result => ", result)
+	printResult(result)
+}
+
+func printResult(result []string) {
+	var style = lipgloss.NewStyle().
+    Bold(true).
+    Foreground(lipgloss.Color("#FAFAFA")).
+    Background(lipgloss.Color("#7D56F4")).
+    PaddingRight(2)
+
+	var resultStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FAFAFA")).Background(lipgloss.Color("#3C3C3C"))
+
+	fmt.Print("\n")
+	fmt.Println(style.Render(" QUERY RESULT:"), resultStyle.Render(result...))
 }
 
 // Parses without precendence
