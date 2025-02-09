@@ -26,7 +26,7 @@ func ParseQuery(query string, index map[string]string, fileList []string) []stri
 	fmt.Println("POST NOT PARSING -> ", result)
 
 	if hasAnd {
-		result = handleAND(result)
+		result = handleANDV2(result)
 		fmt.Println("POST AND PARSING -> ", result)
 	}
 
@@ -136,10 +136,10 @@ func handleAND(result [][]string) [][]string{
 			operator = append(operator, result[i][0])
 			newResult = append(newResult, operator)
 		}
-		// fmt.Println("EVAL STATE: ", result)
+		fmt.Println("EVAL STATE: ", result)
 	}
 
-	// fmt.Println("NEW RESULT STATE", newResult)
+	fmt.Println("NEW RESULT STATE", newResult)
 	// OR fix i guess :P
 	for j := 0; j < len(result); j++ {
 		// Not a fan of this condition
@@ -155,6 +155,63 @@ func handleAND(result [][]string) [][]string{
 	}
 
 	return newResult
+}
+
+func handleANDV2(result [][]string) [][]string{
+	var newResult [][]string
+	var finalRes [][]string
+
+	for i := 0; i < len(result); i++ {
+		if result[i][0] == "AND" && result[i-1][0] == "X" {
+			fmt.Println("Solved an AND, found a new one", newResult, len(newResult))
+			documents := sliceutil.Intersection(newResult[len(newResult) - 1], result[i+1])
+			if len(documents) == 0 {
+				// This is if the result is empty, we put E in that place, \
+				// so when parsing OR, we don't run into index out of bounds errors
+				documents = append(documents, "E") 
+			}
+
+			result[i+1] = []string{"X"}
+			result[i] = []string{"X"}
+
+			newResult[len(newResult) - 1] = documents
+			i++
+		}
+
+		if result[i][0] == "AND" && result[i-1][0] != "X" {
+			fmt.Println(result[i-1], " AND ", result[i+1])
+			documents := sliceutil.Intersection(result[i-1], result[i+1])
+			if len(documents) == 0 {
+				documents = append(documents, "E")
+			}
+
+			result[i-1] = []string{"X"}
+			result[i+1] = []string{"X"}
+
+			newResult = append(newResult, documents)
+			i++
+		}
+		fmt.Println("EVAL STATE: ", result)
+	}
+
+	fmt.Println("NEW RESULT STATE", newResult)
+
+	var nRidx = 0
+	var AndCount = 0
+	for j := 0; j < len(result); j++ {
+		if result[j][0] == "AND" {
+			AndCount++
+			if AndCount > len(newResult) {
+				continue
+			}
+			finalRes = append(finalRes, newResult[nRidx])
+			nRidx++
+		} else if result[j][0] != "X"{
+			finalRes = append(finalRes, result[j])
+		}
+	}
+
+	return finalRes
 }
 
 func handleOR(result [][]string) [][]string {

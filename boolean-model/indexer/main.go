@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+var STOPWORDS = []string{"a", "and", "the", "not", "or", "of", "is", "are", "at", "this", "if", "in", "on"}
+
 func CreateIndex(fileList []string, basePath string, index map[string]string) {
 	for _, filename := range fileList {
 		fileStr := readFile(filename, basePath)
@@ -36,6 +38,10 @@ func tokenizer(str string) []string {
 		// 32 is ASCII for " " & 10 is for \n
 		if str[i] == ' ' || str[i] == '\n' {
 			if len(currChars) > 0 {
+				currWord := string(currChars)
+				if isStopword(STOPWORDS, currWord) {
+					continue
+				}
 				tokens = append(tokens, string(currChars))
 				currChars = []byte{}
 			}
@@ -45,6 +51,16 @@ func tokenizer(str string) []string {
 	}
 
 	return tokens
+}
+
+func isStopword(STOPWORDS []string, element string) bool {
+	for _, stopword := range STOPWORDS {
+		if element == stopword {
+			return true
+		}
+	}
+
+	return false
 }
 
 func addTokensToIndex(tokens []string, filename string, index map[string]string) {
