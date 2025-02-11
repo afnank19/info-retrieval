@@ -85,7 +85,7 @@ func checkSyntax(tokenizedQuery []string) bool{
 		currTerm := tokenizedQuery[i]
 		if length > 1 && i != 0  && currTerm != "AND" && currTerm != "OR" && currTerm != "NOT" {
 			prevTerm := tokenizedQuery[max(i-1, 0)]
-			nextTerm := tokenizedQuery[min(i+1, length-1)]
+			// nextTerm := tokenizedQuery[min(i+1, length-1)]
 
 			if prevTerm != "AND" && prevTerm != "OR" && prevTerm != "NOT" {
 				flags[max(i-1, 0)] = "^"
@@ -94,12 +94,12 @@ func checkSyntax(tokenizedQuery []string) bool{
 				break
 			}
 
-			if nextTerm != "AND" && nextTerm != "OR" && prevTerm != "NOT" {
-				flags[min(i+1, length-1)] = "^"
-				foundError = true
-				errorMsg = "SYNTAX ERROR: Unexpected token " + nextTerm + " \nExpected [TERM] [OPERATOR]" 
-				break
-			}
+			// if nextTerm != "AND" && nextTerm != "OR" && prevTerm != "NOT" {
+			// 	flags[min(i+1, length-1)] = "^"
+			// 	foundError = true
+			// 	errorMsg = "SYNTAX ERROR: Unexpected token " + nextTerm + " \nExpected [TERM] [OPERATOR]" 
+			// 	break
+			// }
 		}
 	}
 
