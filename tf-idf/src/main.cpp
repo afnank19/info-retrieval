@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
+#include <cmath>
 
 namespace fs = std::filesystem;
 
@@ -73,7 +75,12 @@ int token_count(std::string token ,std::vector<std::string> tokens) {
     return count;
 }
 
-// GPT -- debug func
+float tf(int term_count, int total_terms ) {
+    float term_freq = 0.f;
+    return term_freq = (float)term_count/total_terms;
+}
+
+// GPT -- debug/utils func
 void print_term_freq_index(const std::unordered_map<std::string, std::unordered_map<std::string, float>>& table) {
     // Find all unique column headers
     std::unordered_map<std::string, bool> columnHeaders;
@@ -103,31 +110,79 @@ void print_term_freq_index(const std::unordered_map<std::string, std::unordered_
         std::cout << "\n";
     }
 }
+void print_string_int_map(const std::unordered_map<std::string, int>& myMap) {
+    std::cout << std::setw(15) << "Key" << " | " << std::setw(10) << "Value" << "\n";
+    std::cout << std::string(30, '-') << "\n";
+
+    for (const auto& pair : myMap) {
+        std::cout << std::setw(15) << pair.first << " | " << std::setw(10) << pair.second << "\n";
+    }
+}
+void print_string_float_map(const std::unordered_map<std::string, float>& myMap) {
+    std::cout << std::setw(15) << "Key" << " | " << std::setw(10) << "Value" << "\n";
+    std::cout << std::string(30, '-') << "\n";
+
+    for (const auto& pair : myMap) {
+        std::cout << std::setw(15) << pair.first << " | " << std::setw(10) << pair.second << "\n";
+    }
+}
+
+float idf(const int TOTAL_DOCS, int doc_freq) {
+    float idf = std::log((float)TOTAL_DOCS/doc_freq); // don't know which log to use
+    return idf;
+}
+
+std::unordered_map<std::string, float> compute_idf(std::unordered_map<std::string, int> doc_freq_index, const int TOTAL_DOCS) {
+    std::unordered_map<std::string, float> idf_index;
+    for (const auto& it: doc_freq_index) {
+        float inv_df = idf(TOTAL_DOCS, it.second);
+        std::cout << "computed term: " + it.first << " idf: " << inv_df << "\n"; 
+        idf_index[it.first] = inv_df;
+    }
+
+    return idf_index;
+}
+
 
 int main() {
     std::cout << "Hello, TF-IDF" << std::endl;
     std::vector<std::string> file_paths = read_files_from_dir("./collection");
     // read_file("./collection/doc1.txt"); // path relative to the binary
     std::unordered_map<std::string, std::unordered_map<std::string, float>> term_freq_index;
+    std::unordered_map<std::string, float> idf_index;
+    std::unordered_map<std::string, int> doc_freq_index;
 
-    // Hard coded case for one document, iterate over all documents and run this
+    // Creates the TF table
+    const int TOTAL_DOCS = file_paths.size(); 
     for (int idx = 0; idx < file_paths.size(); idx++) {
         std::vector<std::string> tokens = create_tokens(read_file(file_paths[idx]));
+
         int total_terms = tokens.size(); // total terms for the curr doc
+
         for (int i = 0; i < total_terms; i++) {
+            // TERM FREQUENCY
             int token_freq_doc = token_count(tokens[i], tokens);
 
-            float term_freq = (float)token_freq_doc/total_terms;
+            float term_freq = tf(token_freq_doc, total_terms);
+
             printf("tf: %f,  tfd: %d, tt: %d ",term_freq, token_freq_doc, total_terms);
             std::cout << tokens[i] << "\n";
 
-            term_freq_index[file_paths[idx]][tokens[i]] = term_freq; 
+            term_freq_index[file_paths[idx]][tokens[i]] = term_freq;
+
+            // DOCUMENT FREQUENCY
+            int doc_freq = doc_freq_index[tokens[i]]; // will be 0 if key doesn't exist
+            doc_freq += 1;
+            doc_freq_index[tokens[i]] = std::min(doc_freq, TOTAL_DOCS);
         }
     }
 
-
     print_term_freq_index(term_freq_index);
-    // Make a map of map for cross tabulation tables
+    print_string_int_map(doc_freq_index);
+
+    idf_index = compute_idf(doc_freq_index, TOTAL_DOCS);
+    print_string_float_map(idf_index);
+
     return 0;
 }
 
