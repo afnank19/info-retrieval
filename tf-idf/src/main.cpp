@@ -3,11 +3,17 @@
 #include <string>
 #include <filesystem>
 #include <vector>
+#include <unordered_set>
 #include <unordered_map>
 #include <algorithm>
 #include <cmath>
 
 namespace fs = std::filesystem;
+
+struct Document {
+    std::string name;
+    std::vector<float> vector;
+};
 
 std::string read_file(std::string filename) {
     std::ifstream curr_file(filename);
@@ -136,13 +142,27 @@ std::unordered_map<std::string, float> compute_idf(std::unordered_map<std::strin
     std::unordered_map<std::string, float> idf_index;
     for (const auto& it: doc_freq_index) {
         float inv_df = idf(TOTAL_DOCS, it.second);
-        std::cout << "computed term: " + it.first << " idf: " << inv_df << "\n"; 
+        // std::cout << "computed term: " + it.first << " idf: " << inv_df << "\n"; 
         idf_index[it.first] = inv_df;
     }
 
     return idf_index;
 }
 
+std::vector<float> create_tf_idf_vector(std::unordered_map<std::string, float> doc_tf, std::unordered_map<std::string, float> idf_index) {
+    std::vector<float> tf_idf_vec;
+    for (const auto& itr: doc_tf) {
+        float tf = itr.second;
+        float idf = idf_index[itr.first];
+
+        float tf_idf = tf * idf;
+        // printf("tf-idf: %f * %f = %f \n", tf, idf, tf_idf);
+
+        tf_idf_vec.push_back(tf_idf);
+    }
+
+    return tf_idf_vec;
+}
 
 int main() {
     std::cout << "Hello, TF-IDF" << std::endl;
@@ -152,6 +172,14 @@ int main() {
     std::unordered_map<std::string, float> idf_index;
     std::unordered_map<std::string, int> doc_freq_index;
 
+    std::unordered_set<std::string> global_glossary;
+
+    for (int idx = 0; idx < file_paths.size(); idx++) {
+        std::vector<std::string> tokens = create_tokens(read_file(file_paths[idx]));
+
+        global_glossary.insert(tokens.begin(), tokens.end());
+    }
+
     // Creates the TF table
     const int TOTAL_DOCS = file_paths.size(); 
     for (int idx = 0; idx < file_paths.size(); idx++) {
@@ -159,31 +187,67 @@ int main() {
 
         int total_terms = tokens.size(); // total terms for the curr doc
 
-        for (int i = 0; i < total_terms; i++) {
+        for (const auto term: global_glossary) {
             // TERM FREQUENCY
-            int token_freq_doc = token_count(tokens[i], tokens);
+            int token_freq_doc = token_count(term, tokens); // we're counting in the current document
 
             float term_freq = tf(token_freq_doc, total_terms);
 
-            printf("tf: %f,  tfd: %d, tt: %d ",term_freq, token_freq_doc, total_terms);
-            std::cout << tokens[i] << "\n";
+            // printf("tf: %f,  tfd: %d, tt: %d ",term_freq, token_freq_doc, total_terms);
+            // std::cout << tokens[i] << "\n";
 
-            term_freq_index[file_paths[idx]][tokens[i]] = term_freq;
+            term_freq_index[file_paths[idx]][term] = term_freq;
 
             // DOCUMENT FREQUENCY
-            int doc_freq = doc_freq_index[tokens[i]]; // will be 0 if key doesn't exist
-            doc_freq += 1;
-            doc_freq_index[tokens[i]] = std::min(doc_freq, TOTAL_DOCS);
+            // int doc_freq = doc_freq_index[term]; // will be 0 if key doesn't exist
+            // doc_freq += 1;
+            // doc_freq_index[term] = std::min(doc_freq, TOTAL_DOCS);
         }
+
+                // Prev-version
+         for (int i = 0; i < total_terms; i++) {
+             // DOCUMENT FREQUENCY
+             int doc_freq = doc_freq_index[tokens[i]]; // will be 0 if key doesn't exist
+             doc_freq += 1;
+             doc_freq_index[tokens[i]] = std::min(doc_freq, TOTAL_DOCS);
+         }
     }
 
     print_term_freq_index(term_freq_index);
-    print_string_int_map(doc_freq_index);
+    // print_string_int_map(doc_freq_index);
 
     idf_index = compute_idf(doc_freq_index, TOTAL_DOCS);
     print_string_float_map(idf_index);
 
+    printf("\n---Creating vector for doc 1---\n");
+
+    std::unordered_map<std::string, float> doc_tf = term_freq_index["./collection/doc1.txt"];
+    print_string_float_map(doc_tf);
+
+    std::vector<float> doc1_vec = create_tf_idf_vector(doc_tf, idf_index);
+
+    for ( int i = 0; i < doc1_vec.size(); i++) {
+        printf("%f,", doc1_vec[i]);
+    }
     return 0;
 }
 
 
+
+        // Prev-version
+        // for (int i = 0; i < total_terms; i++) {
+        //     // TERM FREQUENCY
+        //     int token_freq_doc = token_count(tokens[i], tokens);
+
+        //     float term_freq = tf(token_freq_doc, total_terms);
+
+        //     // printf("tf: %f,  tfd: %d, tt: %d ",term_freq, token_freq_doc, total_terms);
+        //     // std::cout << tokens[i] << "\n";
+
+        //     term_freq_index[file_paths[idx]][tokens[i]] = term_freq;
+
+        //     // DOCUMENT FREQUENCY
+        //     int doc_freq = doc_freq_index[tokens[i]]; // will be 0 if key doesn't exist
+        //     doc_freq += 1;
+        //     doc_freq_index[tokens[i]] = std::min(doc_freq, TOTAL_DOCS);
+        // }
