@@ -1,2 +1,1 @@
-lewis hamilton is a 7 time formula 1 world champion
-test master doc1 mika
+Machine learning is powerful.

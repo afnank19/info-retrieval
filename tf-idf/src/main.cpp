@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <algorithm>
 #include <cmath>
+#include "../include/file_utils.hpp"
+#include "../include/map_utils.hpp"
 
 namespace fs = std::filesystem;
 
@@ -14,61 +16,6 @@ struct Document {
     std::string name;
     std::vector<float> vector;
 };
-
-std::string read_file(std::string filename) {
-    std::ifstream curr_file(filename);
-    std::string file_text, curr_line;
-
-    if( curr_file.fail( ) ) {
-            std::cerr << "Error - Failed to open " << filename << std::endl;
-            exit( -1 );  // Or use a loop to ask for a different file name.
-    }
-
-    while (getline(curr_file, curr_line)) {
-        // std::cout << "READING: " + curr_line + "\n";
-        file_text += curr_line + " "; // new line has no spaces
-    }
-
-    // std::cout << "final str: " + file_text + "\n";
-    curr_file.close();
-
-    return file_text;
-}
-
-std::vector<std::string> read_files_from_dir(std::string path) {
-    std::vector<std::string> file_paths;
-
-    try {
-        for (const auto& entry : fs::directory_iterator(path)) {
-            // Check if the entry is a regular file (optional)
-            if (fs::is_regular_file(entry.status()))
-                std::cout <<"Adding: " << entry.path() << std::endl;
-                file_paths.push_back(entry.path());
-        }
-    }
-    catch(const std::exception& e){
-        std::cerr << e.what() << '\n';
-    }
-
-    return file_paths;
-}
-
-std::vector<std::string> create_tokens(std::string str) {
-    std::vector<char> temp;
-    std::vector<std::string> tokens;
-
-    for (int i = 0; i < str.length(); ++i) {
-        if (str[i] == ' ' || i+1 == str.length()) { // needs better tokenization
-            std::string token(temp.begin(), temp.end());
-            tokens.push_back(token);
-            temp.clear();    
-            i++;
-        }
-        temp.push_back(str[i]);
-    }
-
-    return tokens;
-}
 
 int token_count(std::string token ,std::vector<std::string> tokens) {
     int count = 0;
@@ -86,55 +33,8 @@ float tf(int term_count, int total_terms ) {
     return term_freq = (float)term_count/total_terms;
 }
 
-// GPT -- debug/utils func
-void print_term_freq_index(const std::unordered_map<std::string, std::unordered_map<std::string, float>>& table) {
-    // Find all unique column headers
-    std::unordered_map<std::string, bool> columnHeaders;
-    for (const auto& row : table) {
-        for (const auto& col : row.second) {
-            columnHeaders[col.first] = true;
-        }
-    }
-
-    // Print the header row
-    std::cout << std::setw(12) << " " << " | ";
-    for (const auto& col : columnHeaders) {
-        std::cout << std::setw(10) << col.first << " | ";
-    }
-    std::cout << "\n" << std::string(12 + columnHeaders.size() * 14, '-') << "\n";
-
-    // Print each row with its values
-    for (const auto& row : table) {
-        std::cout << std::setw(12) << row.first << " | ";
-        for (const auto& col : columnHeaders) {
-            if (row.second.find(col.first) != row.second.end()) {
-                std::cout << std::setw(10) << row.second.at(col.first) << " | ";
-            } else {
-                std::cout << std::setw(10) << "-" << " | ";  // Print '-' if no value exists
-            }
-        }
-        std::cout << "\n";
-    }
-}
-void print_string_int_map(const std::unordered_map<std::string, int>& myMap) {
-    std::cout << std::setw(15) << "Key" << " | " << std::setw(10) << "Value" << "\n";
-    std::cout << std::string(30, '-') << "\n";
-
-    for (const auto& pair : myMap) {
-        std::cout << std::setw(15) << pair.first << " | " << std::setw(10) << pair.second << "\n";
-    }
-}
-void print_string_float_map(const std::unordered_map<std::string, float>& myMap) {
-    std::cout << std::setw(15) << "Key" << " | " << std::setw(10) << "Value" << "\n";
-    std::cout << std::string(30, '-') << "\n";
-
-    for (const auto& pair : myMap) {
-        std::cout << std::setw(15) << pair.first << " | " << std::setw(10) << pair.second << "\n";
-    }
-}
-
 float idf(const int TOTAL_DOCS, int doc_freq) {
-    float idf = std::log((float)TOTAL_DOCS/doc_freq); // don't know which log to use
+    float idf = std::log10((float)TOTAL_DOCS/doc_freq); // don't know which log to use
     return idf;
 }
 
@@ -219,15 +119,28 @@ int main() {
     idf_index = compute_idf(doc_freq_index, TOTAL_DOCS);
     print_string_float_map(idf_index);
 
-    printf("\n---Creating vector for doc 1---\n");
+    // std::unordered_map<std::string, float> doc_tf = term_freq_index["./collection/doc1.txt"];
+    // print_string_float_map(doc_tf);
 
-    std::unordered_map<std::string, float> doc_tf = term_freq_index["./collection/doc1.txt"];
-    print_string_float_map(doc_tf);
+    // std::vector<float> doc1_vec = create_tf_idf_vector(doc_tf, idf_index);
 
-    std::vector<float> doc1_vec = create_tf_idf_vector(doc_tf, idf_index);
+    Document docs[TOTAL_DOCS];
 
-    for ( int i = 0; i < doc1_vec.size(); i++) {
-        printf("%f,", doc1_vec[i]);
+    // Create vectors for each document
+    for (int i = 0; i < TOTAL_DOCS; i++) {
+        std::unordered_map<std::string, float> doc_tf = term_freq_index[file_paths[i]];
+        std::vector<float> doc_vector = create_tf_idf_vector(doc_tf, idf_index);
+
+        docs[i].name = file_paths[i];
+        docs[i].vector = doc_vector;
+    }
+
+    for (int i = 0; i < TOTAL_DOCS; i++) {
+        std::cout << docs[i].name << " - vec: [";
+        for (int j = 0; j < docs[i].vector.size(); j++) {
+            std::cout << docs[i].vector[j] << ",";
+        }
+        std::cout << "]" << " size: " << docs[i].vector.size() << "\n";
     }
     return 0;
 }
