@@ -1,5 +1,5 @@
 run: ./src/main.cpp
-	g++ ./src/main.cpp -o main
+	g++ ./src/*.cpp -o main
 	./main
 
 clean:
