@@ -41,7 +41,22 @@ std::pair<std::vector<std::string>, std::vector<std::vector<float>>> Indexer::cr
     return { doc_names, doc_vectors};
 }
 
-void Indexer::create_global_glossary() {
+std::unordered_map<std::string, float> Indexer::create_tf_vector(std::vector<std::string> tokens, int total_terms) {
+    std::unordered_map<std::string, float> tf_vector;
+
+    for (const auto term: global_glossary) {
+        // TERM FREQUENCY
+        int token_freq_doc = token_count(term, tokens); // we're counting in the current document
+
+        float term_freq = tf(token_freq_doc, total_terms);
+
+        tf_vector[term] = term_freq;
+    }
+
+    return tf_vector;
+}
+void Indexer::create_global_glossary()
+{
     for (int idx = 0; idx < file_paths.size(); idx++) {
         std::vector<std::string> tokens = create_tokens(read_file(file_paths[idx]));
 

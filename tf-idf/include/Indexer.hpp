@@ -25,10 +25,11 @@ private:
     void create_df_index(int total_terms, std::vector<std::string> tokens);
     void init_tf_df_index();
     std::unordered_map<std::string, float> compute_idf();
-    std::vector<float> create_tf_idf_vector(std::unordered_map<std::string, float> doc_tf);
 public:
     Indexer(std::vector<std::string> file_paths);
     std::pair<std::vector<std::string>, std::vector<std::vector<float>>> create_index();
+    std::unordered_map<std::string, float> create_tf_vector(std::vector<std::string> tokens, int total_terms);
+    std::vector<float> create_tf_idf_vector(std::unordered_map<std::string, float> doc_tf);
     float tf(int term_count, int total_terms );
     float idf(const int TOTAL_DOCS, int doc_freq);
     // ~Indexer();

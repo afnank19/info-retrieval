@@ -20,5 +20,32 @@ int main() {
         }
         std::cout << "] \n";
     }
+
+    std::string query;
+    std::cout << "Enter query: ";
+    std::getline(std::cin, query);
+    std::cout << "You entered: " << query << "\n";
+    std::vector<std::string> query_tokens = query_tokenizer(query);
+
+    for (int i = 0; i < query_tokens.size(); i++) {
+        std::cout << query_tokens[i] << ",";
+    }
+
+    auto tf_vec = indexer.create_tf_vector(query_tokens, query_tokens.size());
+
+    std::cout << "Term freqs for QUERY are: \n";
+
+    for ( auto& itr: tf_vec) {
+        std::cout << "Term: " << itr.first << " tf: " << itr.second << "\n";
+    }
+
+    std::vector<float> query_tf_idf_vec = indexer.create_tf_idf_vector(tf_vec);
+
+    std::cout << "TF_IDF vector for query is -> vec: [";
+    for (int i = 0; i < query_tf_idf_vec.size(); i++) {
+        std::cout << query_tf_idf_vec[i] << ",";
+    }
+    std::cout << "]";
+
     return 0;
 }
