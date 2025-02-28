@@ -3,15 +3,12 @@
 #include <cmath>
 
 Indexer::Indexer(std::vector<std::string> file_paths) : file_paths(file_paths) {
-    printf("Creating global glossary\n");
+    printf("CREATING GLOBAL GLOSSARY\n");
     create_global_glossary();
 
-    // temp code here
-    for (const auto term: global_glossary) {
-            std::cout << term << "\n";
-    }
-
     TOTAL_DOCS = file_paths.size();
+    std::cout << "UNIQUE TERMS IN GLOBAL GLOSSARY -> " << global_glossary.size() << std::endl;
+    std::cout << "TOTAL DOCUMENTS -> " << TOTAL_DOCS << std::endl;
 }
 
 float Indexer::tf(int term_count, int total_terms) {
@@ -33,6 +30,8 @@ std::pair<std::vector<std::string>, std::vector<std::vector<float>>> Indexer::cr
     for (int i = 0; i < TOTAL_DOCS; i++) {
         std::unordered_map<std::string, float> doc_tf = term_freq_index[file_paths[i]];
         std::vector<float> doc_vector = create_tf_idf_vector(doc_tf);
+
+        std::cout << "INDEXING -> " << file_paths[i] << std::endl;
 
         doc_names.push_back(file_paths[i]);
         doc_vectors.push_back(doc_vector);
@@ -116,9 +115,7 @@ void Indexer::init_tf_df_index() {
 
         int total_terms = tokens.size(); // total terms for the curr doc
 
-        printf("Creating TERM-FREQ index\n");
         create_term_freq_index(idx, tokens, total_terms);
-        printf("Creating DOCUMENT-FREQ index\n");
         create_df_index(total_terms, tokens);
     }
 }

@@ -56,7 +56,7 @@ std::vector<std::string> create_tokens(std::string str) {
             temp.clear();    
             i++;
         }
-        temp.push_back(str[i]);
+        temp.push_back(std::tolower(str[i]));
     }
 
     return tokens;
@@ -75,7 +75,7 @@ std::vector<std::string> query_tokenizer(std::string str) {
             tokens.push_back(token);
             temp.clear();    
         } else {
-            temp.push_back(str[i]);
+            temp.push_back(std::tolower(str[i]));
         }
     }
 
