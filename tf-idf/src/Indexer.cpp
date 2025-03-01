@@ -1,4 +1,4 @@
-#include "../include/Indexer.hpp"
+#include "Indexer.hpp"
 #include <iostream>
 #include <cmath>
 

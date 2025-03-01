@@ -1,4 +1,4 @@
-#include "../include/VectorMath.hpp"
+#include "VectorMath.hpp"
 #include <iostream>
 #include <cmath>
 

@@ -1,11 +1,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "../include/file_utils.hpp"
+#include "file_utils.hpp"
 // #include "../include/map_utils.hpp"
-#include "../include/Indexer.hpp"
+#include "Indexer.hpp"
 // #include "../include/VectorMath.hpp"
-#include "../include/QueryRunner.hpp"
+#include "QueryRunner.hpp"
 
 int main() {
     std::cout << "----BEGIN-ENGINE----" << std::endl;

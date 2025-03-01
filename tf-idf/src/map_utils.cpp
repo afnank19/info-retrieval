@@ -1,4 +1,4 @@
-#include "../include/map_utils.hpp"
+#include "map_utils.hpp"
 
 void print_term_freq_index(const std::unordered_map<std::string, std::unordered_map<std::string, float>>& table) {
     // Find all unique column headers

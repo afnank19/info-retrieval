@@ -1,12 +1,17 @@
-run: ./src/main.cpp
-	g++ ./src/*.cpp -o main
-	./main
+CXX = g++
+CXXFLAGS = -Iinclude
+SRC = ./src/*.cpp
+OUT = main
 
-build: ./src/main.cpp
-	g++ ./src/*.cpp -o main
+run: $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o $(OUT)
+	./$(OUT)
+
+build: $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o $(OUT)
 
 run-build:
-	./main
+	./$(OUT)
 
 clean:
-	rm ./main
+	rm ./$(OUT)

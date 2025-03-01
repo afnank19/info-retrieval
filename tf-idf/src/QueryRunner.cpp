@@ -1,5 +1,5 @@
-#include "../include/QueryRunner.hpp"
-#include "../include/VectorMath.hpp"
+#include "QueryRunner.hpp"
+#include "VectorMath.hpp"
 #include <iostream>
 #include <utility>
 #include <algorithm>
