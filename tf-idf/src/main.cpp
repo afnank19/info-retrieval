@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include "../include/file_utils.hpp"
-#include "../include/map_utils.hpp"
+// #include "../include/map_utils.hpp"
 #include "../include/Indexer.hpp"
 // #include "../include/VectorMath.hpp"
 #include "../include/QueryRunner.hpp"
