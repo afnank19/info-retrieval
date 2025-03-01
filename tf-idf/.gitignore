@@ -1,3 +1,6 @@
 thoughts.txt
 /.vscode
 main
+
+/include/asio/
+/include/asio.hpp

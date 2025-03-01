@@ -5,6 +5,7 @@
 #include "file_utils.hpp"
 #include "Indexer.hpp"
 #include "QueryRunner.hpp"
+#include "crow.h"
 
 // Should probably move this elsewhere, but since main is not that complex, it is fine here
 std::vector<std::pair<std::string, float>> execute_query(std::string query, Indexer indexer, std::pair<std::vector<std::string>, std::vector<std::vector<float>>> documents) {
@@ -34,15 +35,32 @@ int main() {
         std::cout << "] \n";
     }
 
-    std::string query;
-    std::cout << "ENTER QUERY: ";
-    std::getline(std::cin, query);
+    // std::string query;
+    // std::cout << "ENTER QUERY: ";
 
-    auto search_result = execute_query(query, indexer, documents);
+    crow::SimpleApp app;
+    CROW_ROUTE(app, "/search")
+    ([indexer, documents](const crow::request& req){
+        auto query = crow::query_string{req.url_params};
+        std::string input = query.get("q") ? query.get("q") : "";
 
-    for (const auto& itr: search_result) {
-        std::cout << itr.first << " rel -> " << itr.second << "\n";
-    }
+        auto search_result = execute_query(input, indexer, documents);
+
+        crow::json::wvalue res;
+        for (const auto& itr: search_result) {
+            std::cout << itr.first << " rel -> " << itr.second << "\n";
+            res[itr.first] = itr.second;
+        }
+
+        return res;
+    });
+
+    CROW_ROUTE(app, "/")
+    ([] {
+        return "engine-v0 up";
+    });
+
+    app.port(5173).multithreaded().run();
 
     return 0;
 }
