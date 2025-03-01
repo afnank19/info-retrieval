@@ -5,6 +5,7 @@ Under development!
 In order to run this project locally, you must ensure the following is present:
 
 1. Crow (micro web framework for cpp), It is included in the repository or available at:
+   <br></br>
    `https://github.com/CrowCpp/Crow.git`
 
 2. Asio development headers (NOT INCLUDED, look into Crow's getting started docs for the exact version). Asio is available here:
@@ -30,6 +31,7 @@ In order to run this project locally, you must ensure the following is present:
 
 Must have a collection folder containing .txt files (May add other files like .md or .html)
 An endpoint has been provided:
+<br></br>
 `GET /search?q=your-query`
 
 A request to this endpoint when you run the binary will return JSON containg the path to the file along with the relevancy to the query.
