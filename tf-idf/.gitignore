@@ -4,3 +4,5 @@ main
 
 /include/asio/
 /include/asio.hpp
+
+/scripts/node_modules
