@@ -6,3 +6,5 @@ main
 /include/asio.hpp
 
 /scripts/node_modules
+
+html_files.txt
