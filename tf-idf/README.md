@@ -28,6 +28,14 @@ In order to run this project locally, you must ensure the following is present:
 ```
 
 #### How to use:
+The search engine now supports local HTML files in a "weird" way.
+cd(change dir) to the scripts folder.
+It is NodeJS projects so run:
+```npm install
+   node html-parser.js
+```
+Must have NodeJS and NPM installed
+You can then run the search engine using the make commands provided above
 
 Must have a collection folder containing .txt files (May add other files like .md or .html)
 An endpoint has been provided:

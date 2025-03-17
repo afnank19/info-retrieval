@@ -31,9 +31,10 @@ std::vector<std::string> read_files_from_dir(std::string path) {
     try {
         for (const auto& entry : fs::directory_iterator(path)) {
             // Check if the entry is a regular file (optional)
-            if (fs::is_regular_file(entry.status()))
+            if (fs::is_regular_file(entry.status())){
                 std::cout <<"Adding: " << entry.path() << std::endl;
                 file_paths.push_back(entry.path());
+            }
         }
     }
     catch(const std::exception& e){
