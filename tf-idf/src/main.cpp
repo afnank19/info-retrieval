@@ -15,6 +15,7 @@ std::vector<std::pair<std::string, float>> execute_query(std::string query, Inde
     std::vector<float> query_tf_idf_vec = indexer.create_tf_idf_vector(tf_vec);
 
     auto search_result = QueryRunner::run_query(query_tf_idf_vec, documents);
+    // Need to built the correct result here
 
     return search_result;
 }

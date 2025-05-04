@@ -12,9 +12,14 @@
 
 class Indexer {
 private:
+    struct Result {
+        std::string title;
+        std::string link;
+    };
     std::unordered_map<std::string, std::unordered_map<std::string, float>> term_freq_index;
     std::unordered_map<std::string, float> idf_index;
     std::unordered_map<std::string, int> doc_freq_index;
+    std::unordered_map<std::string, Result> result_map;
     std::unordered_set<std::string> global_glossary;
     std::vector<std::string> file_paths;
 

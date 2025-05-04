@@ -6,6 +6,8 @@ Indexer::Indexer(std::vector<std::string> file_paths) : file_paths(file_paths) {
     printf("CREATING GLOBAL GLOSSARY\n");
     create_global_glossary();
 
+    // Build a Map of <filename, [title, link]>
+
     TOTAL_DOCS = file_paths.size();
     std::cout << "UNIQUE TERMS IN GLOBAL GLOSSARY -> " << global_glossary.size() << std::endl;
     std::cout << "TOTAL DOCUMENTS -> " << TOTAL_DOCS << std::endl;

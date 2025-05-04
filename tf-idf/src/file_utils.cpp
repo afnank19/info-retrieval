@@ -25,6 +25,40 @@ std::string read_file(std::string filename) {
     return file_text;
 }
 
+// Horribly written
+std::pair<std::string, std::string> get_title_and_link_from_file(std::string filename)
+{
+    std::ifstream curr_file(filename);
+    std::string title, link, curr_line;
+
+    if( curr_file.fail( ) ) {
+            std::cerr << "Error - Failed to open " << filename << std::endl;
+            exit( -1 );  // Or use a loop to ask for a different file name.
+    }
+
+    while (getline(curr_file, curr_line)) {
+        std::string flag = curr_line.substr(0, 13);
+        bool foundAnyFlag = false;
+
+        if ( flag == "<title_swe12>") {
+            title = curr_line.substr(13, curr_line.length());
+            foundAnyFlag = true;
+        }
+
+        if ( flag == "<link_swe123>") {
+            link = curr_line.substr(13, curr_line.length());
+            foundAnyFlag = true;
+        }
+
+        if (!foundAnyFlag) {
+            break;
+        }
+    }
+    curr_file.close();
+
+    return { title, link };
+}
+
 std::vector<std::string> read_files_from_dir(std::string path) {
     std::vector<std::string> file_paths;
 
