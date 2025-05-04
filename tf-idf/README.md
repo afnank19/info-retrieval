@@ -42,4 +42,4 @@ An endpoint has been provided:
 <br></br>
 `GET /search?q=your-query`
 
-A request to this endpoint when you run the binary will return JSON containg the path to the file along with the relevancy to the query.
+A request to this endpoint when you run the binary will return JSON containing the path to the file along with the relevancy to the query.
