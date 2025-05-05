@@ -7,3 +7,6 @@
     Need to parse json somehow, probably best to use a lib, or if we use a predictable format, we could stick to txt files
     i.e first two lines begin and end with unique char sequence, so that the title, and link can be extracted!
 }
+{
+    Add stemming, best to use a lib for good results!
+}

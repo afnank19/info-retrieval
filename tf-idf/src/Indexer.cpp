@@ -7,6 +7,8 @@ Indexer::Indexer(std::vector<std::string> file_paths) : file_paths(file_paths) {
     create_global_glossary();
 
     // Build a Map of <filename, [title, link]>
+    printf("CREATING RESULT MAP\n");
+    build_result_map();
 
     TOTAL_DOCS = file_paths.size();
     std::cout << "UNIQUE TERMS IN GLOBAL GLOSSARY -> " << global_glossary.size() << std::endl;
@@ -21,6 +23,11 @@ float Indexer::tf(int term_count, int total_terms) {
 float Indexer::idf(const int TOTAL_DOCS, int doc_freq) {
     float idf = std::log10((float)TOTAL_DOCS/doc_freq); // don't know which log to use
     return idf;
+}
+
+std::unordered_map<std::string, Indexer::Result> Indexer::get_result_map()
+{
+    return result_map;
 }
 
 std::pair<std::vector<std::string>, std::vector<std::vector<float>>> Indexer::create_index() {
@@ -119,5 +126,27 @@ void Indexer::init_tf_df_index() {
 
         create_term_freq_index(idx, tokens, total_terms);
         create_df_index(total_terms, tokens);
+    }
+}
+
+void Indexer::build_result_map()
+{
+    for (size_t idx = 0; idx < file_paths.size(); idx++) {
+        auto [title, link] = get_title_and_link_from_file(file_paths[idx]);
+
+        Result res;
+
+        res.title = title;
+        res.link = link;
+
+        result_map.emplace(file_paths[idx], std::move(res));
+    }
+    print_result_map();
+}
+
+void Indexer::print_result_map()
+{
+    for (const auto& pair : result_map) {
+        std::cout << std::setw(15) << pair.first << " | " << std::setw(10) << pair.second.title << "\n";
     }
 }

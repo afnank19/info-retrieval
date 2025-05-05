@@ -8,16 +8,30 @@
 #include "crow.h"
 
 // Should probably move this elsewhere, but since main is not that complex, it is fine here
-std::vector<std::pair<std::string, float>> execute_query(std::string query, Indexer indexer, std::pair<std::vector<std::string>, std::vector<std::vector<float>>> documents) {
+std::vector<std::pair<std::string, std::string>> execute_query(std::string query, Indexer indexer, std::pair<std::vector<std::string>, std::vector<std::vector<float>>> documents) {
     std::vector<std::string> query_tokens = query_tokenizer(query);
 
     auto tf_vec = indexer.create_tf_vector(query_tokens, query_tokens.size());
     std::vector<float> query_tf_idf_vec = indexer.create_tf_idf_vector(tf_vec);
 
-    auto search_result = QueryRunner::run_query(query_tf_idf_vec, documents);
-    // Need to built the correct result here
+    auto search_result = QueryRunner::run_query(query_tf_idf_vec, documents); // contains a pair of filepaths and their relevancy scores
+    // Need to build the correct result here
+    auto res_map = indexer.get_result_map();
+    std::vector<std::pair<std::string, std::string>> res;
+    for (const auto& itr: search_result) {
+            // res[itr.first] = itr.second;
+            std::string doc_path = itr.first;
+            std::string title = res_map[doc_path].title;
+            std::string link = res_map[doc_path].link;
+            res.push_back(std::make_pair(title, link));
+    }
 
-    return search_result;
+
+    //std::string test = search_result[1].first;
+
+    //std::cout << res_map[test].title;
+
+    return res;
 }
 
 int main() {
@@ -48,9 +62,13 @@ int main() {
         auto search_result = execute_query(input, indexer, documents);
 
         crow::json::wvalue res;
+        std::size_t i = 0;
         for (const auto& itr: search_result) {
-            std::cout << itr.first << " rel -> " << itr.second << "\n";
-            res[itr.first] = itr.second;
+            //std::cout << itr.first << " rel -> " << itr.second << "\n";
+
+            res[i]["title"] = itr.first;
+            res[i]["link"] = itr.second;
+            ++i;
         }
 
         return res;
