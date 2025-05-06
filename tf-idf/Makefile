@@ -1,6 +1,6 @@
 CXX = g++
-CXXFLAGS = -Iinclude
-SRC = ./src/*.cpp
+CXXFLAGS = -Iinclude -Iporter2_stemmer
+SRC = ./src/*.cpp porter2_stemmer/porter2_stemmer.cpp
 OUT = main
 
 run: $(SRC)

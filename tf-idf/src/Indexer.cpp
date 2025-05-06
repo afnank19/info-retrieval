@@ -33,6 +33,7 @@ std::unordered_map<std::string, Indexer::Result> Indexer::get_result_map()
 std::pair<std::vector<std::string>, std::vector<std::vector<float>>> Indexer::create_index() {
     init_tf_df_index();
     idf_index = compute_idf();
+    // print_string_float_map(idf_index);
 
     std::vector<std::string> doc_names;
     std::vector<std::vector<float>> doc_vectors;
@@ -84,12 +85,21 @@ void Indexer::create_term_freq_index(int idx, std::vector<std::string> tokens, i
 }
 
 void Indexer::create_df_index(int total_terms, std::vector<std::string> tokens) {
+    std::unordered_map<std::string, bool> marked_terms;
     for (int i = 0; i < total_terms; i++) {
         // DOCUMENT FREQUENCY
         int doc_freq = doc_freq_index[tokens[i]]; // will be 0 if key doesn't exist
+
+        bool marked = marked_terms[tokens[i]];
+        if (marked) {
+            continue;
+        }
+
         doc_freq += 1;
         doc_freq_index[tokens[i]] = std::min(doc_freq, TOTAL_DOCS);
+        marked_terms[tokens[i]] = true;
     }
+    // print_string_int_map(doc_freq_index);
 }
 
 std::unordered_map<std::string, float> Indexer::compute_idf() {

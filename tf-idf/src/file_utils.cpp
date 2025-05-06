@@ -16,6 +16,19 @@ std::string read_file(std::string filename) {
 
     while (getline(curr_file, curr_line)) {
         // std::cout << "READING: " + curr_line + "\n";
+        if (curr_line.length() > 13) 
+        {
+            std::string flag = curr_line.substr(0, 13);
+
+            if ( flag == "<title_swe12>") {
+                curr_line = curr_line.substr(13, curr_line.length());
+            }
+
+            if ( flag == "<link_swe123>") {
+                curr_line = curr_line.substr(13, curr_line.length());
+            }
+        }
+
         file_text += curr_line + " "; // new line has no spaces
     }
 
@@ -84,8 +97,10 @@ std::vector<std::string> create_tokens(std::string str) {
     std::vector<std::string> tokens;
 
     for (int i = 0; i < str.length(); ++i) {
-        if (str[i] == ' ' || i+1 == str.length()) { // needs better tokenization
+        if (str[i] == ' ' || str[i] == '.' || str[i] == ',' || i+1 == str.length()) { // needs better tokenization
             std::string token(temp.begin(), temp.end());
+            Porter2Stemmer::trim(token);
+            Porter2Stemmer::stem(token);
             tokens.push_back(token);
             // std::cout << token << std::endl;
             temp.clear();    
@@ -107,6 +122,8 @@ std::vector<std::string> query_tokenizer(std::string str) {
     for (int i = 0; i <= str.length(); ++i) {
         if (str[i] == ' ' || i == str.length()) { // needs better tokenization
             std::string token(temp.begin(), temp.end());
+            Porter2Stemmer::trim(token);
+            Porter2Stemmer::stem(token);
             tokens.push_back(token);
             temp.clear();    
         } else {

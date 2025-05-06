@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "porter2_stemmer.h"
 
 std::string read_file(std::string filename);
 std::pair<std::string, std::string> get_title_and_link_from_file(std::string filename);
